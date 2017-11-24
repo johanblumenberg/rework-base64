@@ -28,11 +28,11 @@ export interface Options {
     maxImageSize: number;
 
     /** Decides what to do if an image file is not found */
-    breakOnMissingFile: Action;
+    actOnMissingFile: Action;
     /** Decides what to do if an image is found that is too big */
-    breakOnLargeFile: Action;
+    actOnLargeFile: Action;
     /** Decodes what to do if the same image is encoded more than once */
-    breakOnEncodedTwice: Action;
+    actOnEncodedTwice: Action;
 };
 
 export function base64(baseDir: string, options: Options) {
@@ -41,9 +41,9 @@ export function base64(baseDir: string, options: Options) {
         exclude: [ /.*/ ],
         maxImageSize: 8192,
 
-        breakOnMissingFile: 'error',
-        breakOnLargeFile: 'warn',
-        breakOnEncodedTwice: 'warn'
+        actOnMissingFile: 'error',
+        actOnLargeFile: 'warn',
+        actOnEncodedTwice: 'warn'
     }, options);
 
     var cache: { [url: string]: string } = {};
@@ -68,7 +68,7 @@ export function base64(baseDir: string, options: Options) {
     return url(function (url: string) {
         if (matches(url)) {
             if (cache[url]) {
-                return error(cache[url], opts.breakOnEncodedTwice, url, "is encoded more than once")
+                return error(cache[url], opts.actOnEncodedTwice, url, "is encoded more than once")
             } else {
                 let file = path.resolve(baseDir, url);
 
@@ -79,10 +79,10 @@ export function base64(baseDir: string, options: Options) {
                         cache[url] = data.content;
                         return data.content;
                     } else {
-                        return error(url, opts.breakOnLargeFile, url, 'is too large');
+                        return error(url, opts.actOnLargeFile, url, 'is too large');
                     }
                 } else {
-                    return error(url, opts.breakOnMissingFile, url, 'is missing');
+                    return error(url, opts.actOnMissingFile, url, 'is missing');
                 }
             }
         } else {

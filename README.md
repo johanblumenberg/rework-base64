@@ -14,9 +14,9 @@ gulp.src('src/styles/**/*.css')
             maxImageSize: 2048,
             include: [ /^img\// ],
 
-            breakOnMissingFile: 'error',
-            breakOnLargeFile: 'warn',
-            breakOnEncodedTwice: 'warn'
+            actOnMissingFile: 'error',
+            actOnLargeFile: 'warn',
+            actOnEncodedTwice: 'warn'
         })))
     .pipe(gulp.dest('dist'));
 ```
@@ -68,19 +68,19 @@ Type: `number`
 
 Only images which are smaller than `maxImageSize` after they are encoded will be inlined.
 
-#### breakOnMissingFile
+#### actOnMissingFile
 
 Type: `Action`
 
 Decides what to do if an image file is not found.
 
-#### breakOnLargeFile
+#### actOnLargeFile
 
 Type: `Action`
 
 Decides what to do if an image is found that is too big
 
-#### breakOnEncodedTwice
+#### actOnEncodedTwice
 
 Type: `Action`
 
