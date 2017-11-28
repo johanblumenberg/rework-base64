@@ -1,6 +1,6 @@
 {
   "name": "rework-base64",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Inline images in css as a base64 encoded data uri",
   "main": "lib/index.js",
   "scripts": {
