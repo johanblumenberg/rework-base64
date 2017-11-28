@@ -5,7 +5,7 @@ rework plugin to inline images in css as a base64 encoded data uri
 
 ```javascript
 var gulp = require('gulp');
-var rework = require('gulp-rework'),
+var rework = require('gulp-rework');
 var base64 = require('rework-base64');
 
 gulp.src('src/styles/**/*.css')
@@ -23,28 +23,17 @@ gulp.src('src/styles/**/*.css')
 
 ## API
 
-### Action
-
-Enum that decides what action to take if a problem is detected.
-
-```
-enum Action {
-  /** Ignore the error and continue */
-  IGNORE = '',
-  /** Warn about the error and continue */
-  WARN = 'warn',
-  /** Warn about the error and break */
-  ERROR = 'error'
-};
-```
-
 ### base64(dest, options)
 
 #### dest
 
 Base directory where to find images.
 
+Type: `string`
+
 #### options
+
+Type: `Options`
 
 Options that are passed to base64
 
@@ -68,6 +57,12 @@ Type: `number`
 
 Only images which are smaller than `maxImageSize` after they are encoded will be inlined.
 
+#### maxRepoerted
+
+Type: `number`
+
+Maximum number of warnings that should be reported.
+
 #### actOnMissingFile
 
 Type: `Action`
@@ -86,3 +81,24 @@ Type: `Action`
 
 Decodes what to do if the same image is encoded more than once
 
+### Action
+
+Enum that decides what action to take if a problem is detected.
+
+#### Action.IGNORE
+
+Value: `''`
+
+Ignore the error and continue
+
+#### Action.WARN
+
+Value: `'warn'`
+
+Warn about the error and continue.
+
+#### Action.ERROR
+
+Value: `'error'`
+
+Warn about the error and break.

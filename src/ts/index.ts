@@ -26,6 +26,8 @@ export interface Options {
     exclude: RegExp[];
     /** Only images which are smaller than `maxImageSize` after they are encoded will be inlined */
     maxImageSize: number;
+    /** Maximum number of warnings that should be reported */
+    maxReported: number;
 
     /** Decides what to do if an image file is not found */
     actOnMissingFile: Action;
@@ -40,13 +42,15 @@ export function base64(baseDir: string, options: Options) {
         include: [],
         exclude: [ /.*/ ],
         maxImageSize: 8192,
+        maxReported: 10,
 
         actOnMissingFile: 'error',
         actOnLargeFile: 'warn',
         actOnEncodedTwice: 'warn'
     }, options);
 
-    var cache: { [url: string]: string } = {};
+    let cache: { [url: string]: string } = {};
+    let reported = 0;
 
     function error(value: string, action: Action, url: string, msg: string) {
         msg = 'Image file ' + url + ' ' + msg;
@@ -55,7 +59,9 @@ export function base64(baseDir: string, options: Options) {
             console.error(msg);
             throw new Error(msg);
         } else if (action === 'warn') {
-            console.warn(msg);
+            if (reported++ < opts.maxReported) {
+                console.warn(msg);
+            }
         }
         return value;
     }
