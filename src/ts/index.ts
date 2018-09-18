@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const Datauri = require('datauri');
-const url = require('rework-plugin-url');
+const func = require('rework-plugin-function');
 
 /**
  *  Enum that decides what action to take if a problem is detected.
@@ -35,30 +35,34 @@ export interface Options {
     actOnLargeFile: Action;
     /** Decodes what to do if the same image is encoded more than once */
     actOnEncodedTwice: Action;
+
+    /** If set to true, include the original URL as a comment */
+    originalAsComment: boolean;
 };
 
-export function base64(baseDir: string, options: Options) {
+export function base64(baseDir: string, options: Partial<Options>) {
     var opts: Options = Object.assign({
-        include: [],
+        include: [] as string[],
         exclude: [ /.*/ ],
         maxImageSize: 8192,
         maxReported: 10,
 
-        actOnMissingFile: 'error',
-        actOnLargeFile: 'warn',
-        actOnEncodedTwice: 'warn'
+        actOnMissingFile: Action.ERROR,
+        actOnLargeFile: Action.WARN,
+        actOnEncodedTwice: Action.WARN,
+        originalAsComment: false
     }, options);
 
     let cache: { [url: string]: string } = {};
     let reported = 0;
 
-    function error(value: string, action: Action, url: string, msg: string) {
+    function error(value: string | undefined, action: Action, url: string, msg: string) {
         msg = 'Image file ' + url + ' ' + msg;
 
-        if (action === 'error') {
+        if (action === Action.ERROR) {
             console.error(msg);
             throw new Error(msg);
-        } else if (action === 'warn') {
+        } else if (action === Action.WARN) {
             if (reported++ < opts.maxReported) {
                 console.warn(msg);
             }
@@ -66,6 +70,26 @@ export function base64(baseDir: string, options: Options) {
         return value;
     }
 
+    function url(fn: (url: string) => string | undefined) {
+        return func({
+            url: function(path: string){
+                path = path.split('"').join('');
+                path = path.split('\'').join('');
+
+                let oldValue = path.trim();
+                let newValue = fn.call(this, oldValue);
+
+                if (!newValue) {
+                    return 'url("' + oldValue + '")';
+                } else if (opts.originalAsComment) {
+                    return '/*' + oldValue + '*/ url("' + newValue + '")';
+                } else {
+                    return 'url("' + newValue + '")';
+                }
+            }
+        }, false);
+    }
+    
     function matches(url: string): boolean {
         return !url.startsWith('data:') &&
             (opts.include.some(re => !!url.match(re)) || !opts.exclude.some(re => !!url.match(re)));
@@ -82,17 +106,16 @@ export function base64(baseDir: string, options: Options) {
                     let data = new Datauri(file);
 
                     if (data.content.length < opts.maxImageSize) {
-                        cache[url] = data.content;
-                        return data.content;
+                        return cache[url] = data.content;
                     } else {
-                        return error(url, opts.actOnLargeFile, url, 'is too large');
+                        return error(undefined, opts.actOnLargeFile, url, 'is too large');
                     }
                 } else {
-                    return error(url, opts.actOnMissingFile, url, 'is missing');
+                    return error(undefined, opts.actOnMissingFile, url, 'is missing');
                 }
             }
         } else {
-            return url;
+            return undefined;
         }
     });
 }
