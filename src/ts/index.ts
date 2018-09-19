@@ -4,6 +4,8 @@ import * as fs from 'fs';
 const Datauri = require('datauri');
 const func = require('rework-plugin-function');
 
+const NAME = 'rework-base64';
+
 /**
  *  Enum that decides what action to take if a problem is detected.
  */
@@ -55,14 +57,18 @@ export function base64(baseDir: string, options: Partial<Options>) {
 
     let cache: { [url: string]: string } = {};
     let reported = 0;
+    let errors = 0;
+    let warnings = 0;
+    let wasted = 0;
 
     function error(value: string | undefined, action: Action, url: string, msg: string) {
         msg = 'Image file ' + url + ' ' + msg;
 
         if (action === Action.ERROR) {
+            errors++;
             console.error(msg);
-            throw new Error(msg);
         } else if (action === Action.WARN) {
+            warnings++;
             if (reported++ < opts.maxReported) {
                 console.warn(msg);
             }
@@ -95,9 +101,10 @@ export function base64(baseDir: string, options: Partial<Options>) {
             (opts.include.some(re => !!url.match(re)) || !opts.exclude.some(re => !!url.match(re)));
     }
 
-    return url(function (url: string) {
+    function base64(url: string) {
         if (matches(url)) {
             if (cache[url]) {
+                wasted += cache[url].length;
                 return error(cache[url], opts.actOnEncodedTwice, url, "is encoded more than once")
             } else {
                 let file = path.resolve(baseDir, url);
@@ -117,5 +124,27 @@ export function base64(baseDir: string, options: Partial<Options>) {
         } else {
             return undefined;
         }
-    });
+    }
+
+    return function(this: any) {
+        let ret = url(base64).apply(this, arguments);
+
+        if (warnings > 0 && errors > 0) {
+            console.log(`${NAME}: There were ${errors} errors and ${warnings} warnings`);
+        } else if (errors > 0) {
+            console.log(`${NAME}: There were ${errors} errors`);
+        } else if (warnings > 0) {
+            console.log(`${NAME}: There were ${warnings} warnings`);
+        }
+
+        if (wasted > 0) {
+            console.log(`${NAME}: Duplicate images are using ${wasted} bytes`)
+        }
+
+        if (errors > 0) {
+            throw new Error('There were errors, see the log');
+        } else {
+            return ret;
+        }
+    }
 }
