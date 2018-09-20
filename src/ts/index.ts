@@ -59,10 +59,12 @@ export function base64(baseDir: string, options: Partial<Options>) {
     let reported = 0;
     let errors = 0;
     let warnings = 0;
+    let numImages = 0;
+    let converted = 0;
     let wasted = 0;
 
     function error(value: string | undefined, action: Action, url: string, msg: string) {
-        msg = 'Image file ' + url + ' ' + msg;
+        msg = `${NAME}: Image file ${url} ${msg}`;
 
         if (action === Action.ERROR) {
             errors++;
@@ -104,6 +106,8 @@ export function base64(baseDir: string, options: Partial<Options>) {
     function base64(url: string) {
         if (matches(url)) {
             if (cache[url]) {
+                numImages++;
+                converted += cache[url].length;
                 wasted += cache[url].length;
                 return error(cache[url], opts.actOnEncodedTwice, url, "is encoded more than once")
             } else {
@@ -113,7 +117,10 @@ export function base64(baseDir: string, options: Partial<Options>) {
                     let data = new Datauri(file);
 
                     if (data.content.length < opts.maxImageSize) {
-                        return cache[url] = data.content;
+                        cache[url] = data.content;
+                        numImages++;
+                        converted += cache[url].length;
+                        return cache[url];
                     } else {
                         return error(undefined, opts.actOnLargeFile, url, 'is too large');
                     }
@@ -137,8 +144,9 @@ export function base64(baseDir: string, options: Partial<Options>) {
             console.log(`${NAME}: There were ${warnings} warnings`);
         }
 
+        console.log(`${NAME}: A total of ${numImages} images were converted, using ${converted} bytes`);
         if (wasted > 0) {
-            console.log(`${NAME}: Duplicate images are using ${wasted} bytes`)
+            console.log(`${NAME}: Duplicate images are using ${wasted} bytes`);
         }
 
         if (errors > 0) {
