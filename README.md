@@ -16,7 +16,8 @@ gulp.src('src/styles/**/*.css')
 
             actOnMissingFile: 'error',
             actOnLargeFile: 'warn',
-            actOnEncodedTwice: 'warn'
+            actOnEncodedTwice: 'warn',
+            originalAsComment: true
         })))
     .pipe(gulp.dest('dist'));
 ```
@@ -80,6 +81,13 @@ Decides what to do if an image is found that is too big
 Type: `Action`
 
 Decodes what to do if the same image is encoded more than once
+
+#### originalAsComment
+
+Type: `boolean`
+
+If set to true, the original URL will be left as a comment in the
+resulting css output.
 
 ### Action
 
